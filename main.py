@@ -132,8 +132,7 @@ from fastapi.responses import HTMLResponse
 
 @app.get("/uygulama", response_class=HTMLResponse)
 async def uygulama():
-    with open("index.html", encoding="utf-8") as f:
-        return f.read()
+    return open("/app/index.html").read()
 
 class MetinGirdi(BaseModel):
     metin: str
