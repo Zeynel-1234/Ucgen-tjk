@@ -198,3 +198,27 @@ async function analiz(){
   btn.textContent="⚡ ANALİZ ET";btn.disabled=false;btn.style.background="linear-gradient(135deg,#f59e0b,#d97706)";btn.style.color="#000";
 }
 </script></body></html>"""
+class MetinGirdi(BaseModel):
+    metin: str
+    sehir: str = ""
+    tarih: str = ""
+    kosuNo: int = 0
+
+@app.post("/metin")
+async def metinden_cek(girdi: MetinGirdi):
+    atlar = parse_tablo(girdi.metin, girdi.kosuNo)
+    if not atlar:
+        # Düz metin parse dene
+        satirlar = girdi.metin.strip().split("\n")
+        at_no = 1
+        for satir in satirlar:
+            parcalar = satir.split()
+            if len(parcalar) >= 2 and any(c.isalpha() for c in parcalar[0]):
+                atlar.append(At(no=at_no, isim=parcalar[0], ekBilgi=satir))
+                at_no += 1
+    if not atlar:
+        raise HTTPException(status_code=404, detail={"mesaj": "Metinden at verisi çıkarılamadı"})
+    return {"basari": True, "kaynak": "kullanici", "veri": YarisVerisi(
+        kosu=Kosu(sehir=girdi.sehir, tarih=girdi.tarih, kosuNo=girdi.kosuNo),
+        atlar=atlar, kaynak="kullanici tarafindan girildi"
+    )}
