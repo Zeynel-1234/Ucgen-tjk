@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>👻 Ghost Observer Mobile</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
+
+:root {
+  --bg:       #020c14;
+  --bg2:      #071524;
+  --bg3:      #0c1e2e;
+  --border:   #0e3352;
+  --border2:  #155a7a;
+  --cyan:     #00e5ff;
+  --cyan2:    #0097a7;
+  --green:    #00e676;
+  --green2:   #00695c;
+  --amber:    #ffab00;
+  --red:      #ff1744;
+  --purple:   #e040fb;
+  --text:     #90a4ae;
+  --texth:    #eceff1;
+  --dim:      #2a3f4f;
+  --mono:     'Share Tech Mono', monospace;
+  --sans:     'Rajdhani', sans-serif;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ────────────────────────────────── */
+.header {
+  background: linear-gradient(180deg, #020e1a 0%, #071828 100%);
+  border-bottom: 1px solid var(--border2);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header::after {
+  content:'';
+  position:absolute;
+  bottom:-1px; left:0; right:0; height:1px;
+  background: linear-gradient(90deg,transparent,var(--cyan),transparent);
+  animation: scan 5s linear infinite;
+}
+@keyframes scan { 0%{opacity:0.3} 50%{opacity:1} 100%{opacity:0.3} }
+
+.logo-box {
+  width:44px; height:44px;
+  background: radial-gradient(circle at 40% 35%, #001f35 0%, #041220 100%);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:24px;
+  box-shadow: 0 0 20px rgba(0,229,255,0.15);
+  flex-shrink:0;
+}
+.header-info { flex:1; }
+.header-title {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--cyan);
+  letter-spacing: 2.5px;
+  text-shadow: 0 0 16px rgba(0,229,255,0.6);
+}
+.header-sub { font-size:11px; color:var(--dim); letter-spacing:1px; margin-top:2px; }
+.live-dot {
+  width:8px; height:8px; border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 10px var(--green);
+  animation: pulse 2s infinite;
+  flex-shrink:0;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+
+/* ── TABS ──────────────────────────────────── */
+.tabs {
+  display:flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar { display:none; }
+
+.tab {
+  flex:1;
+  min-width:80px;
+  padding: 11px 8px;
+  text-align:center;
+  font-size:11px;
+  font-family: var(--mono);
+  letter-spacing:1px;
+  color: var(--dim);
+  cursor:pointer;
+  border-bottom: 2px solid transparent;
+  transition: all .2s;
+  white-space:nowrap;
+  user-select:none;
+}
+.tab.active {
+  color: var(--cyan);
+  border-bottom-color: var(--cyan);
+  background: rgba(0,229,255,0.04);
+}
+
+/* ── PANELS ────────────────────────────────── */
+.panel { display:none; padding:16px; }
+.panel.active { display:block; }
+
+/* ── CARD ──────────────────────────────────── */
+.card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+  position:relative;
+  overflow:hidden;
+}
+.card-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--dim);
+  text-transform:uppercase;
+  margin-bottom: 10px;
+}
+.card-accent { position:absolute; top:0; left:0; right:0; height:2px; }
+.card-accent.cyan { background: linear-gradient(90deg, var(--cyan), transparent); }
+.card-accent.green { background: linear-gradient(90deg, var(--green), transparent); }
+.card-accent.amber { background: linear-gradient(90deg, var(--amber), transparent); }
+.card-accent.purple { background: linear-gradient(90deg, var(--purple), transparent); }
+
+/* ── STATS ROW ─────────────────────────────── */
+.stats-row {
+  display:grid; grid-template-columns:1fr 1fr 1fr;
+  gap:8px; margin-bottom:12px;
+}
+.stat {
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px 6px;
+  text-align:center;
+}
+.stat-n {
+  font-family:var(--mono);
+  font-size:26px; font-weight:900;
+  line-height:1;
+}
+.stat-n.c { color:var(--cyan); text-shadow:0 0 12px rgba(0,229,255,.5); }
+.stat-n.g { color:var(--green); text-shadow:0 0 12px rgba(0,230,118,.5); }
+.stat-n.a { color:var(--amber); text-shadow:0 0 12px rgba(255,171,0,.5); }
+.stat-l { font-size:9px; color:var(--dim); letter-spacing:1px; margin-top:3px; }
+
+/* ── BADGE TAGS ─────────────────────────────── */
+.tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+.tag {
+  font-family:var(--mono);
+  font-size:9px;
+  padding:3px 9px;
+  border-radius:4px;
+  border:1px solid;
+  letter-spacing:.5px;
+}
+.tag-b  { color:var(--cyan);   border-color:var(--cyan2); background:rgba(0,229,255,.07); }
+.tag-a  { color:var(--green);  border-color:var(--green2); background:rgba(0,230,118,.07); }
+.tag-i  { color:var(--amber);  border-color:#795500; background:rgba(255,171,0,.07); }
+.tag-s  { color:var(--purple); border-color:#7b1fa2; background:rgba(224,64,251,.07); }
+.tag-d  { color:var(--dim);    border-color:#1c3040; background:rgba(30,50,65,.07); }
+
+/* ── LOG BOX ────────────────────────────────── */
+.logbox {
+  background:#01080f;
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:10px;
+  height:110px;
+  overflow-y:auto;
+  font-family:var(--mono);
+  font-size:10.5px;
+  scrollbar-width:thin;
+  scrollbar-color:var(--border2) transparent;
+}
+.logbox::-webkit-scrollbar{width:3px;}
+.logbox::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.le { display:flex; gap:8px; margin-bottom:3px; line-height:1.4; }
+.lt { color:var(--dim); flex-shrink:0; }
+.lm.ok   { color:var(--green); }
+.lm.warn { color:var(--amber); }
+.lm.info { color:#3a5568; }
+.lm.err  { color:var(--red); }
+
+/* ── INPUTS ─────────────────────────────────── */
+.inp {
+  width:100%;
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:7px;
+  color:var(--texth);
+  padding:11px 12px;
+  font-size:13px;
+  font-family:var(--mono);
+  outline:none;
+  transition:border-color .2s, box-shadow .2s;
+  margin-bottom:8px;
+}
+.inp::placeholder { color:var(--dim); }
+.inp:focus { border-color:var(--cyan2); box-shadow:0 0 10px rgba(0,229,255,.1); }
+textarea.inp { resize:vertical; min-height:100px; line-height:1.5; }
+
+/* ── BUTTONS ─────────────────────────────────── */
+.btn {
+  display:flex; align-items:center; justify-content:center; gap:7px;
+  width:100%; padding:13px;
+  border:none; border-radius:8px;
+  font-family:var(--sans); font-weight:700; font-size:14px;
+  letter-spacing:.5px; cursor:pointer;
+  transition:all .2s; user-select:none;
+  -webkit-user-select:none;
+}
+.btn-prime {
+  background: linear-gradient(135deg, #003d33 0%, #00574a 100%);
+  color:var(--cyan);
+  border:1px solid var(--green2);
+  box-shadow:0 0 20px rgba(0,230,118,.1);
+  margin-bottom:8px;
+}
+.btn-prime:active:not(:disabled) { transform:scale(.97); box-shadow:0 0 30px rgba(0,230,118,.25); }
+.btn-prime:disabled { opacity:.35; cursor:not-allowed; }
+.btn-prime.spin { animation:loading 1.4s ease infinite; }
+@keyframes loading{0%,100%{opacity:1}50%{opacity:.55}}
+
+.btn-sec {
+  background:transparent;
+  color:var(--text);
+  border:1px solid var(--border);
+  font-size:12px;
+  padding:10px;
+}
+.btn-sec:active { border-color:var(--border2); }
+.btn-danger:active { border-color:var(--red); color:var(--red); }
+
+.btn-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+/* ── ANALYSIS PANEL ─────────────────────────── */
+.analysis-out {
+  background:#010c14;
+  border:1px solid var(--green2);
+  border-radius:8px;
+  overflow:hidden;
+  display:none;
+  margin-top:12px;
+}
+.ao-head {
+  padding:9px 12px;
+  background:rgba(0,105,92,.25);
+  border-bottom:1px solid var(--green2);
+  font-family:var(--mono);
+  font-size:10px;
+  color:var(--green);
+  letter-spacing:1px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.ao-body {
+  padding:14px;
+  font-family:var(--mono);
+  font-size:11.5px;
+  color:#b2dfdb;
+  max-height:300px;
+  overflow-y:auto;
+  white-space:pre-wrap;
+  line-height:1.7;
+}
+
+/* ── BOOKMARKLET SECTION ────────────────────── */
+.bm-code-wrap {
+  position:relative;
+  margin-bottom:12px;
+}
+.bm-code {
+  background:#010a12;
+  border:1px solid var(--border);
+  border-radius:7px;
+  padding:12px;
+  font-family:var(--mono);
+  font-size:9.5px;
+  color:#546e7a;
+  word-break:break-all;
+  line-height:1.6;
+  max-height:120px;
+  overflow-y:auto;
+  user-select:all;
+  -webkit-user-select:all;
+}
+.copy-badge {
+  position:absolute;
+  top:8px; right:8px;
+  background:var(--cyan2);
+  color:#000;
+  font-size:9px;
+  font-family:var(--mono);
+  padding:3px 8px;
+  border-radius:4px;
+  cursor:pointer;
+  font-weight:700;
+  letter-spacing:.5px;
+  transition:background .2s;
+}
+.copy-badge:active { background:var(--green); }
+
+.step {
+  display:flex; gap:12px;
+  padding:12px 0;
+  border-bottom:1px solid var(--border);
+}
+.step:last-child { border-bottom:none; }
+.step-num {
+  width:28px; height:28px; flex-shrink:0;
+  background:var(--bg2);
+  border:1px solid var(--border2);
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono);
+  font-size:12px;
+  color:var(--cyan);
+}
+.step-text { font-size:13px; line-height:1.6; }
+.step-sub { font-size:11px; color:var(--dim); margin-top:3px; font-family:var(--mono); }
+
+/* ── DIVIDER ────────────────────────────────── */
+.divider { height:1px; background:var(--border); margin:12px 0; }
+
+/* ── DATA PANEL ─────────────────────────────── */
+.data-summary {
+  display:flex; flex-direction:column; gap:6px;
+  max-height:200px; overflow-y:auto;
+}
+.data-item {
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:9px 12px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.di-left { font-family:var(--mono); font-size:11px; }
+.di-type { color:var(--cyan); margin-bottom:2px; }
+.di-url  { color:var(--dim); font-size:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
+.di-count {
+  font-family:var(--mono); font-size:16px; font-weight:900;
+  color:var(--green);
+}
+
+/* ── SCROLLBAR ──────────────────────────────── */
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo-box">👻</div>
+  <div class="header-info">
+    <div class="header-title">GHOST OBSERVER</div>
+    <div class="header-sub">TJK · URİS v3.5 · VIA BROWSER MOBİL</div>
+  </div>
+  <div class="live-dot"></div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" data-tab="dashboard">📊 DASHBOARD</div>
+  <div class="tab" data-tab="analyze">⚡ ANALİZ</div>
+  <div class="tab" data-tab="bookmarklet">🔖 KURULUM</div>
+  <div class="tab" data-tab="about">ℹ INFO</div>
+</div>
+
+<!-- ═══ PANEL: DASHBOARD ════════════════════════════════ -->
+<div class="panel active" id="panel-dashboard">
+
+  <div class="stats-row">
+    <div class="stat"><div class="stat-n c" id="s-records">0</div><div class="stat-l">KAYIT</div></div>
+    <div class="stat"><div class="stat-n g" id="s-bundles">0</div><div class="stat-l">PAKET</div></div>
+    <div class="stat"><div class="stat-n a" id="s-pages">0</div><div class="stat-l">SAYFA TİPİ</div></div>
+  </div>
+
+  <div class="tags" id="tag-area">
+    <span class="tag tag-d">Veri bekleniyor...</span>
+  </div>
+
+  <div class="card">
+    <div class="card-accent cyan"></div>
+    <div class="card-title">// SİSTEM GÜNLÜĞÜ</div>
+    <div class="logbox" id="logbox">
+      <div class="le"><span class="lt">--:--:--</span><span class="lm info">Ghost Observer hazır. TJK.org'da bookmarklet çalıştır...</span></div>
+    </div>
+  </div>
+
+  <div class="card" id="data-list-card" style="display:none">
+    <div class="card-accent green"></div>
+    <div class="card-title">// TOPLANAN VERİ PAKETLERİ</div>
+    <div class="data-summary" id="data-list"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-sec" id="btn-refresh">🔄 Yenile</button>
+    <button class="btn btn-sec btn-danger" id="btn-clear">🗑 Temizle</button>
+  </div>
+</div>
+
+<!-- ═══ PANEL: ANALİZ ════════════════════════════════════ -->
+<div class="panel" id="panel-analyze">
+
+  <div class="card">
+    <div class="card-accent green"></div>
+    <div class="card-title">// CLAUDE API BAĞLANTISI</div>
+    <input class="inp" id="api-key" type="password" placeholder="sk-ant-... (Anthropic API Key)" autocomplete="off">
+    <input class="inp" id="race-ctx" type="text" placeholder="Koşu: İzmir 3.Koşu · Çim 1400m · Handikap">
+    <input class="inp" id="extra-note" type="text" placeholder="Ek analiz notu (opsiyonel)">
+  </div>
+
+  <div class="card">
+    <div class="card-accent amber"></div>
+    <div class="card-title">// VEYA: VERİYİ YAPIŞTIIR (manuel)</div>
+    <textarea class="inp" id="paste-data" placeholder="TJK sayfasından kopyaladığın tabloyu buraya yapıştır...&#10;&#10;Bookmarklet çalışmadıysa bu alanı kullan."></textarea>
+  </div>
+
+  <button class="btn btn-prime" id="btn-analyze" disabled>
+    <span>⚡</span> URİS v3.5 ANALİZİ BAŞLAT
+  </button>
+
+  <div class="analysis-out" id="analysis-panel">
+    <div class="ao-head">
+      <span>⚡ URİS v3.5 — ANALİZ ÇIKTISI</span>
+      <span id="token-info"></span>
+    </div>
+    <div class="ao-body" id="analysis-body"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="card">
+    <div class="card-accent purple"></div>
+    <div class="card-title">// SON ANALİZ GEÇMİŞİ</div>
+    <div class="logbox" id="analyze-log">
+      <div class="le"><span class="lt">--:--</span><span class="lm info">Henüz analiz yapılmadı.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PANEL: KURULUM ════════════════════════════════════ -->
+<div class="panel" id="panel-bookmarklet">
+
+  <div class="card">
+    <div class="card-accent cyan"></div>
+    <div class="card-title">// BOOKMARKLET KODU (Kopyala → Via Browser)</div>
+    <div class="bm-code-wrap">
+      <div class="bm-code" id="bm-code">Yükleniyor...</div>
+      <div class="copy-badge" id="copy-bm">KOPYALA</div>
+    </div>
+    <div style="font-size:11px;color:var(--dim);font-family:var(--mono);">
+      ⚠ Tüm metni seç → kopyala → Via Browser adres çubuğuna yapıştır → kaydet.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-accent amber"></div>
+    <div class="card-title">// KURULUM ADIMLAARI</div>
+    <div class="step">
+      <div class="step-num">1</div>
+      <div><div class="step-text">Yukarıdaki kodu kopyala</div>
+      <div class="step-sub">javascript: ile başlayan tüm satır</div></div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div><div class="step-text">Via Browser'da yeni sekme aç</div>
+      <div class="step-sub">Adres çubuğuna yapıştır → Kaydet (⭐ yer imi)</div></div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div><div class="step-text">TJK.org bülten sayfasına git</div>
+      <div class="step-sub">mobil.tjk.org veya www.tjk.org</div></div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div><div class="step-text">Kaydettiğin yer imini çalıştır</div>
+      <div class="step-sub">Ekranda 👻 Ghost panel açılır</div></div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div><div class="step-text">Ghost panel → "Topla" → bu uygulamaya dön</div>
+      <div class="step-sub">Dashboard'da veriler görünür → Analiz et</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-accent green"></div>
+    <div class="card-title">// ALTERNATİF: Direkt Adres Çubuğu</div>
+    <div style="font-size:13px;line-height:1.7;color:var(--text);">
+      Via Browser adres çubuğuna <code style="color:var(--cyan);font-family:var(--mono);">javascript:</code> yaz,
+      ardından kodu yapıştır ve Enter'a bas. Her TJK sayfasında çalıştırabilirsin.
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PANEL: INFO ════════════════════════════════════════ -->
+<div class="panel" id="panel-about">
+  <div class="card">
+    <div class="card-accent cyan"></div>
+    <div class="card-title">// MİMARİ</div>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.7;">
+      <div><span style="color:var(--cyan);font-family:var(--mono);">Bookmarklet</span><br>
+        TJK.org'a inject edilir. Sayfa tipini tanır, tabloları yakalar, localStorage'a yazar.</div>
+      <div><span style="color:var(--green);font-family:var(--mono);">localStorage Köprüsü</span><br>
+        Bookmarklet → <code style="color:var(--amber)">ghost_tjk_bundles</code> anahtarı → Bu araç okur.</div>
+      <div><span style="color:var(--amber);font-family:var(--mono);">Claude API</span><br>
+        Toplanan veriler URİS v3.5 system prompt ile Claude'a gönderilir. Direkt yanıt alınır.</div>
+      <div><span style="color:var(--purple);font-family:var(--mono);">Anti-Detection</span><br>
+        Gerçek tarayıcı oturumu. TJK cookie + IP. Bot değil — kullanıcı davranışı.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-accent amber"></div>
+    <div class="card-title">// URİS v3.5 KARAR EŞİKLERİ</div>
+    <div style="font-family:var(--mono);font-size:12px;line-height:2;">
+      <div style="color:var(--cyan);">≥80 puan → SOVEREIGN (Kesin Aday)</div>
+      <div style="color:var(--green);">70-79 → BREAKER (2-3. Aday)</div>
+      <div style="color:var(--amber);">60-69 → GHOST (Sürpriz Aday)</div>
+      <div style="color:var(--dim);">&lt;60 → İZLE</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-accent purple"></div>
+    <div class="card-title">// VERSİYON</div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--dim);line-height:2;">
+      Ghost Observer Mobile v1.0<br>
+      URİS v3.5 Engine<br>
+      Via Browser · Android Optimize
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// GHOST OBSERVER MOBILE — Core Logic
+// ═══════════════════════════════════════════════════════════
+
+// ── Storage Key ─────────────────────────────────────────────
+const STORAGE_KEY = 'ghost_tjk_bundles';
+
+// ── Yardımcılar ──────────────────────────────────────────────
+function $(id) { return document.getElementById(id); }
+
+function ts() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+}
+
+function log(msg, type='info', boxId='logbox') {
+  const box = $(boxId);
+  if (!box) return;
+  const el = document.createElement('div');
+  el.className = 'le';
+  el.innerHTML = `<span class="lt">${ts()}</span><span class="lm ${type}">${msg}</span>`;
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+  while(box.children.length > 60) box.removeChild(box.firstChild);
+}
+
+// ── Veri Yönetimi (localStorage) ──────────────────────────────
+function getBundles() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch { return []; }
+}
+
+function saveBundles(bundles) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(bundles.slice(-300)));
+}
+
+function clearBundles() {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+// ── Dashboard Güncelle ────────────────────────────────────────
+function refreshDashboard() {
+  const bundles = getBundles();
+  const totalRecords = bundles.reduce((s,b) => s + (b.recordCount||0), 0);
+  const pageTypes = {};
+  bundles.forEach(b => { pageTypes[b.pageType] = (pageTypes[b.pageType]||0)+1; });
+  const pageCount = Object.keys(pageTypes).length;
+
+  $('s-records').textContent = totalRecords;
+  $('s-bundles').textContent = bundles.length;
+  $('s-pages').textContent   = pageCount;
+
+  // Analiz butonunu aktifleştir
+  const hasData = totalRecords > 0 || ($('paste-data') && $('paste-data').value.trim().length > 20);
+  $('btn-analyze').disabled = !hasData;
+
+  // Tag'lar
+  const tagMap = {
+    BULTEN:'tag-b 📋 Bülten', AGF:'tag-a 📊 AGF',
+    IDMAN:'tag-i ⏱ İdman', SONUC:'tag-s 🏁 Sonuç',
+    AT_KARTI:'tag-d 🐎 At', GENEL:'tag-d 📄 Genel'
+  };
+  const tagArea = $('tag-area');
+  if (Object.keys(pageTypes).length === 0) {
+    tagArea.innerHTML = '<span class="tag tag-d">Veri bekleniyor...</span>';
+  } else {
+    tagArea.innerHTML = Object.entries(pageTypes).map(([t,c]) => {
+      const [cls,...label] = (tagMap[t]||'tag-d '+t).split(' ');
+      return `<span class="tag ${cls}">${label.join(' ')} ×${c}</span>`;
+    }).join('');
+  }
+
+  // Veri listesi
+  const listCard = $('data-list-card');
+  const listEl = $('data-list');
+  if (bundles.length === 0) {
+    listCard.style.display = 'none';
+  } else {
+    listCard.style.display = 'block';
+    listEl.innerHTML = bundles.slice(-8).reverse().map(b => {
+      const urlShort = b.url ? b.url.replace('https://','').replace('http://','').slice(0,40)+'...' : '';
+      return `<div class="data-item">
+        <div class="di-left">
+          <div class="di-type">${b.pageLabel||b.pageType}</div>
+          <div class="di-url">${urlShort}</div>
+        </div>
+        <div class="di-count">${b.recordCount||0}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ── Tab Sistemi ───────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    $('panel-'+tab.dataset.tab).classList.add('active');
+    if (tab.dataset.tab === 'dashboard') refreshDashboard();
+  });
+});
+
+// ── Butonlar ──────────────────────────────────────────────────
+$('btn-refresh').addEventListener('click', () => {
+  refreshDashboard();
+  log('📡 Dashboard yenilendi', 'ok');
+});
+
+$('btn-clear').addEventListener('click', () => {
+  if (!confirm('Tüm toplanan veri silinecek. Emin misin?')) return;
+  clearBundles();
+  refreshDashboard();
+  log('🗑 Veri havuzu temizlendi', 'warn');
+  $('analysis-panel').style.display = 'none';
+});
+
+// Yapıştırılan veri → analiz butonu aktifleştir
+$('paste-data').addEventListener('input', () => {
+  const hasData = getBundles().length > 0 || $('paste-data').value.trim().length > 20;
+  $('btn-analyze').disabled = !hasData;
+});
+
+// ── Claude API Analizi ────────────────────────────────────────
+$('btn-analyze').addEventListener('click', async () => {
+  const apiKey    = $('api-key').value.trim();
+  const raceCtx   = $('race-ctx').value.trim();
+  const extraNote = $('extra-note').value.trim();
+  const pasteData = $('paste-data').value.trim();
+
+  if (!apiKey) {
+    log('⚠ API anahtarı gerekli!', 'warn', 'analyze-log');
+    // Ana sayfaya dön ve API key alanına odaklan
+    document.querySelector('[data-tab="analyze"]').click();
+    setTimeout(() => $('api-key').focus(), 100);
+    return;
+  }
+  if (!apiKey.startsWith('sk-ant-')) {
+    log('⚠ Geçersiz API key formatı. sk-ant- ile başlamalı.', 'warn', 'analyze-log');
+    return;
+  }
+
+  // Veriyi hazırla
+  const bundles = getBundles();
+  let dataPayload;
+
+  if (pasteData.length > 20) {
+    dataPayload = [{ pageType:'MANUAL', pageLabel:'Manuel Yapıştırma', recordCount:1,
+                     url:'manual', capturedAt:new Date().toISOString(),
+                     result:{ method:'TEXT', data:[{ text:pasteData }]} }];
+    log(`📋 Manuel veri kullanılıyor (${pasteData.length} karakter)`, 'info', 'analyze-log');
+  } else if (bundles.length > 0) {
+    dataPayload = bundles;
+    log(`📡 ${bundles.length} paket, ${bundles.reduce((s,b)=>s+b.recordCount,0)} kayıt gönderiliyor...`, 'info', 'analyze-log');
+  } else {
+    log('⚠ Gönderilecek veri yok. Bookmarklet çalıştır veya veri yapıştır.', 'warn', 'analyze-log');
+    return;
+  }
+
+  // API key kaydet
+  localStorage.setItem('ghost_api_key', apiKey);
+
+  // UI
+  const btn = $('btn-analyze');
+  btn.disabled = true; btn.classList.add('spin');
+  btn.innerHTML = '<span>⏳</span> Claude işliyor...';
+  $('analysis-panel').style.display = 'none';
+
+  const systemPrompt = `Sen URİS v3.5 sistemini kullanan bir TJK at yarışı analiz uzmanısın.
+
+GÖREV: TJK verilerini 12 katmanlı URİS skorlama sistemiyle analiz et.
+
+ÇIKTI FORMAT (Her at için):
+• AT ADI → URİS Skor (X/116) → ROL
+• Güçlü taraflar | Zayıf noktalar
+• Son 6Y okuma (soldan sağa = yeni→eski)
+
+KARAR EŞİKLERİ:
+≥80 → SOVEREIGN (Kesin Aday)
+70-79 → BREAKER (2-3. Aday)
+60-69 → GHOST (Sürpriz/Gizli Aday)
+<60 → İZLE
+
+KRİTİK KURALLAR:
+- Son 6Y soldan sağa: en sol = en yeni koşu
+- DS bayrağı = pist avantajı
+- En hafif kilo + taze KGS + piyasanın gözden kaçırdığı = sürpriz winner
+- AP jokey + ağır kilo = sahte favori
+- AGF düşük + form yüksek = değer atı
+- "Bu at bugün olduğundan daha iyi mi?" sorusunu her at için sor
+
+SONA: TRINITY ÇIKTISI ver → SOVEREIGN + BREAKER + GHOST ataması.`;
+
+  const cleanData = dataPayload.map(b => ({
+    tip: b.pageLabel,
+    kayit: b.recordCount,
+    zaman: b.capturedAt,
+    veri: b.result?.data?.slice?.(0,4) || b.result?.data || []
+  }));
+
+  const userMsg = `TJK Veri Paketi (Ghost Observer Mobile):\n\n${JSON.stringify(cleanData, null, 2)}\n\n${raceCtx ? 'Koşu: '+raceCtx : ''}\n${extraNote ? 'Not: '+extraNote : ''}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5',
+        max_tokens: 3000,
+        system: systemPrompt,
+        messages: [{ role:'user', content:userMsg }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      throw new Error(`HTTP ${res.status}: ${err.error?.message||'Bilinmiyor'}`);
+    }
+
+    const data = await res.json();
+    const analysis = data.content[0].text;
+    const tokens = data.usage?.output_tokens || 0;
+
+    $('analysis-body').textContent = analysis;
+    $('token-info').textContent = tokens + ' token';
+    $('analysis-panel').style.display = 'block';
+
+    log(`✅ Analiz tamam! (${tokens} token)`, 'ok', 'analyze-log');
+
+    // Analiz geçmişine kaydet
+    const history = JSON.parse(localStorage.getItem('ghost_analysis_history')||'[]');
+    history.unshift({ ts: new Date().toISOString(), analysis, raceCtx, tokens });
+    localStorage.setItem('ghost_analysis_history', JSON.stringify(history.slice(0,10)));
+
+  } catch(err) {
+    log(`❌ Hata: ${err.message}`, 'err', 'analyze-log');
+    alert('Claude API hatası:\n' + err.message);
+  }
+
+  btn.disabled = false; btn.classList.remove('spin');
+  btn.innerHTML = '<span>⚡</span> URİS v3.5 ANALİZİ BAŞLAT';
+  refreshDashboard();
+});
+
+// ── Bookmarklet Oluşturucu ────────────────────────────────────
+function buildBookmarklet() {
+  // Bu kod TJK.org sayfasına inject edilir
+  const bm = `javascript:(function(){
+var SK='ghost_tjk_bundles';
+function ts(){var d=new Date();return d.toISOString();}
+function detectPage(){var u=window.location.href.toLowerCase();var types=[['BULTEN',/bulten|program|kosu-listesi/],['AGF',/agf|ganyan/],['IDMAN',/idman|antrenman/],['SONUC',/sonuc|result/],['AT_KARTI',/at-karti|at-kosu|horse/]];for(var i=0;i<types.length;i++){if(types[i][1].test(u))return{type:types[i][0],label:types[i][0]};} return{type:'GENEL',label:'Genel TJK'};}
+function tbl2json(t){var rows=[].slice.call(t.querySelectorAll('tr'));if(rows.length<2)return[];var headers=[].slice.call(rows[0].querySelectorAll('th,td')).map(function(h,i){return h.innerText.trim()||('col'+i);});return rows.slice(1).map(function(row){var cells=[].slice.call(row.querySelectorAll('td,th'));var obj={};headers.forEach(function(h,i){obj[h]=cells[i]?cells[i].innerText.trim():'';});return obj;}).filter(function(r){return Object.values(r).some(function(v){return v.length>0;});});}
+function scrape(){var page=detectPage();var tables=[].slice.call(document.querySelectorAll('table'));var all=[];tables.forEach(function(t){var rows=tbl2json(t);if(rows.length>0)all.push({id:t.id,cls:t.className.slice(0,50),rows:rows});});var cnt=all.reduce(function(s,t){return s+t.rows.length;},0);if(cnt===0)return null;return{id:'bm_'+Date.now(),pageType:page.type,pageLabel:page.label,url:window.location.href,title:document.title,capturedAt:ts(),recordCount:cnt,result:{method:'TABLE',data:all}};}
+function save(bundle){try{var arr=JSON.parse(localStorage.getItem(SK)||'[]');arr.push(bundle);localStorage.setItem(SK,JSON.stringify(arr.slice(-200)));return arr.length;}catch(e){return 0;}}
+function showPanel(msg,count,total){var el=document.getElementById('__ghost_panel');if(!el){el=document.createElement('div');el.id='__ghost_panel';el.style.cssText='position:fixed;bottom:16px;right:12px;z-index:999999;background:rgba(2,12,20,.96);border:1px solid #155a7a;border-radius:10px;padding:12px 16px;min-width:220px;font-family:monospace;font-size:12px;color:#90a4ae;box-shadow:0 0 30px rgba(0,229,255,.2);backdrop-filter:blur(8px);';document.body.appendChild(el);}
+el.innerHTML='<div style="color:#00e5ff;font-size:11px;letter-spacing:2px;margin-bottom:8px;">👻 GHOST OBSERVER</div>'+'<div style="color:#00e676;font-size:13px;font-weight:bold;margin-bottom:4px;">'+msg+'</div>'+'<div style="color:#546e7a;font-size:10px;">Toplam: '+total+' kayıt / '+count+' paket</div>'+'<div style="margin-top:10px;display:flex;gap:8px;">'+'<button onclick="var b=JSON.parse(localStorage.getItem(\''+SK+'\')||\'[]\');var cnt=b.reduce(function(s,x){return s+x.recordCount;},0);document.getElementById(\'__ghost_panel\').innerHTML=\'<div style=color:#00e5ff>👻 TOPLANDII<br><span style=font-size:20px;color:#00e676>\'+cnt+\'</span> kayıt<br><span style=font-size:10px;color:#546e7a>Bu uygulamaya dön → Analiz Et</span></div>\';" style="flex:1;background:#003d33;border:1px solid #00695c;color:#00e5ff;border-radius:5px;padding:6px;font-size:11px;cursor:pointer;font-family:monospace;">✓ Topla</button>'+'<button onclick="document.getElementById(\'__ghost_panel\').remove();" style="background:transparent;border:1px solid #1c3040;color:#546e7a;border-radius:5px;padding:6px 8px;font-size:11px;cursor:pointer;font-family:monospace;">✕</button>'+'</div>';}
+var bundle=scrape();
+if(!bundle){showPanel('⚠ Tablo bulunamadı',0,0);return;}
+var count=save(bundle);var total=bundle.recordCount;showPanel('✓ '+bundle.pageLabel+' → '+total+' kayıt yakalandı',count,total);
+})();`;
+  return bm;
+}
+
+// Bookmarklet kodunu göster
+const bmCode = buildBookmarklet();
+$('bm-code').textContent = bmCode;
+
+$('copy-bm').addEventListener('click', () => {
+  const code = $('bm-code').textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code).then(() => {
+      $('copy-bm').textContent = '✓ KOPYALANDI';
+      setTimeout(() => { $('copy-bm').textContent = 'KOPYALA'; }, 2000);
+      log('📋 Bookmarklet kopyalandı', 'ok');
+    }).catch(() => fallbackCopy(code));
+  } else {
+    fallbackCopy(code);
+  }
+});
+
+function fallbackCopy(text) {
+  const el = document.createElement('textarea');
+  el.value = text; el.style.position = 'fixed'; el.style.opacity = '0';
+  document.body.appendChild(el); el.select();
+  try {
+    document.execCommand('copy');
+    $('copy-bm').textContent = '✓ KOPYALANDI';
+    setTimeout(() => { $('copy-bm').textContent = 'KOPYALA'; }, 2000);
+  } catch(e) {
+    alert('Manuel kopyala:\n' + text.slice(0,100) + '...');
+  }
+  document.body.removeChild(el);
+}
+
+// ── Başlangıç ─────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {});
+
+// Kayıtlı API key yükle
+const savedKey = localStorage.getItem('ghost_api_key');
+if (savedKey) $('api-key').value = savedKey;
+
+// İlk yükleme
+refreshDashboard();
+log('Ghost Observer Mobile hazır. "KURULUM" sekmesinden bookmarklet kur.', 'ok');
+
+// Otomatik yenile (TJK'da arka planda veri geldiyse göster)
+setInterval(refreshDashboard, 4000);
+
+// Yapıştırılan veri analiz butonu
+$('paste-data').addEventListener('input', () => {
+  const hasData = getBundles().length > 0 || $('paste-data').value.trim().length > 20;
+  $('btn-analyze').disabled = !hasData;
+});
+</script>
+</body>
+</html>
