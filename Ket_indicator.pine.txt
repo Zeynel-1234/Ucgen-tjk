@@ -1,0 +1,179 @@
+//@version=5
+// =====================================================================
+// KET — Kinezyolojik Denge İzi (Kinetic Equilibrium Trace)
+// rtalb için tasarlandı, tüm thin-volume BIST hisselerinde çalışır
+// Klasik indikatör YOK: ham OHLCV + N-proxy (lower TF bar count)
+// =====================================================================
+indicator("KET — Kinezyolojik Denge İzi", shorttitle="KET", overlay=false, max_bars_back=5000)
+
+// ============ PARAMETRELER ============
+g1 = "Çekirdek"
+lookback     = input.int(20,  "Z-skor lookback (N bar)",        minval=5,  group=g1)
+k_bars       = input.int(10,  "Tetik öncesi referans (k)",      minval=3,  group=g1)
+m_bars       = input.int(8,   "Soğurma fazı (m bar)",           minval=2,  group=g1)
+dts_trigger  = input.float(0.80, "DTS/TTS tetik eşiği",          minval=0.5, maxval=0.99, step=0.01, group=g1)
+alpha        = input.float(1.5,  "Sigmoid α (eğim)",              minval=0.1, step=0.1, group=g1)
+beta         = input.float(1.0,  "Sigmoid β (kayma)",             minval=0.0, step=0.1, group=g1)
+
+g2 = "Soğurma Litmus Testi"
+v_ratio      = input.float(0.60, "V eşik oranı (V̄_m / V̄_k)",     minval=0.1, maxval=1.0, step=0.05, group=g2)
+n_ratio      = input.float(0.60, "N eşik oranı (N̄_m / N̄_k)",     minval=0.1, maxval=1.0, step=0.05, group=g2)
+range_ratio  = input.float(0.50, "Range eşik oranı",              minval=0.1, maxval=1.0, step=0.05, group=g2)
+delta_tol    = input.float(0.005,"Yeni ekstrem toleransı (δ)",    minval=0.0,  maxval=0.05, step=0.001, group=g2)
+
+g3 = "N-Proxy (İşlem Sayısı Yaklaşıklığı)"
+use_ltf      = input.bool(true, "Alt periyot bar sayısı kullan", group=g3)
+ltf_period   = input.timeframe("1", "Alt periyot",               group=g3)
+
+g4 = "Görselleştirme"
+show_aqs     = input.bool(true, "Soğurma Kalitesi Skoru (AQS) çiz", group=g4)
+show_g_e_a   = input.bool(false,"Atomik metrikleri (G,E,A) tablo", group=g4)
+
+// ============ N-PROXY (TRADE COUNT YAKLAŞIKLIĞI) ============
+// Pine'da N yok. Lower TF bar count = aktivite proxy'si.
+// 1dk periyotta lower TF anlamsız → volume tabanlı fallback.
+ltf_array = request.security_lower_tf(syminfo.tickerid, ltf_period, 1)
+ltf_count = array.size(ltf_array)
+v_norm = volume / math.max(ta.sma(volume, lookback), 1.0)
+n_proxy = use_ltf and ltf_count > 0 ? float(ltf_count) : math.max(v_norm * 10.0, 1.0)
+
+// ============ ATOMİK METRİKLER (G, E, A) ============
+eps = syminfo.mintick * 0.1
+range_val = math.max(high - low, eps)
+g_val = volume / n_proxy                           // Granularite — işlem başı büyüklük
+e_val = (close - open) / range_val                 // Yönsel verimlilik
+a_val = volume * range_val / n_proxy               // Yapısal baskı
+
+// ============ DİP TÜKENME SKORU (DTS) ============
+// PDR = (V * N) / |L - min(L_{t-1..t-k})|
+prior_min_low = ta.lowest(low[1], k_bars)
+disp_low = math.max(math.abs(low - prior_min_low), syminfo.mintick * 0.5)
+pdr_low = (volume * n_proxy) / disp_low
+
+pdr_low_mean = ta.sma(pdr_low, lookback)
+pdr_low_std  = ta.stdev(pdr_low, lookback)
+pdr_low_z    = (pdr_low - pdr_low_mean) / math.max(pdr_low_std, 0.0001)
+dts = 1.0 / (1.0 + math.exp(-alpha * (pdr_low_z - beta)))
+
+// ============ TEPE TÜKENME SKORU (TTS) ============
+prior_max_high = ta.highest(high[1], k_bars)
+disp_high = math.max(math.abs(high - prior_max_high), syminfo.mintick * 0.5)
+pdr_high = (volume * n_proxy) / disp_high
+
+pdr_high_mean = ta.sma(pdr_high, lookback)
+pdr_high_std  = ta.stdev(pdr_high, lookback)
+pdr_high_z    = (pdr_high - pdr_high_mean) / math.max(pdr_high_std, 0.0001)
+tts = 1.0 / (1.0 + math.exp(-alpha * (pdr_high_z - beta)))
+
+// ============ TETİK YAKALAMA (DURUM MAKİNESİ) ============
+v_mean_k = ta.sma(volume,    k_bars)
+n_mean_k = ta.sma(n_proxy,   k_bars)
+r_mean_k = ta.sma(range_val, k_bars)
+
+var int   trig_low_bar = na
+var float trig_low_px  = na
+var float ref_v_low    = na
+var float ref_n_low    = na
+var float ref_r_low    = na
+
+new_low_trig = dts > dts_trigger and (na(trig_low_bar) or (bar_index - trig_low_bar) > m_bars * 2)
+if new_low_trig
+    trig_low_bar := bar_index
+    trig_low_px  := low
+    ref_v_low    := v_mean_k[1]
+    ref_n_low    := n_mean_k[1]
+    ref_r_low    := r_mean_k[1]
+
+var int   trig_high_bar = na
+var float trig_high_px  = na
+var float ref_v_high    = na
+var float ref_n_high    = na
+var float ref_r_high    = na
+
+new_high_trig = tts > dts_trigger and (na(trig_high_bar) or (bar_index - trig_high_bar) > m_bars * 2)
+if new_high_trig
+    trig_high_bar := bar_index
+    trig_high_px  := high
+    ref_v_high    := v_mean_k[1]
+    ref_n_high    := n_mean_k[1]
+    ref_r_high    := r_mean_k[1]
+
+// ============ SOĞURMA FAZI METRİKLERİ ============
+v_mean_m  = ta.sma(volume,    m_bars)
+n_mean_m  = ta.sma(n_proxy,   m_bars)
+r_mean_m  = ta.sma(range_val, m_bars)
+min_low_m  = ta.lowest(low,  m_bars)
+max_high_m = ta.highest(high, m_bars)
+
+bars_since_low_trig  = na(trig_low_bar)  ? -1 : bar_index - trig_low_bar
+bars_since_high_trig = na(trig_high_bar) ? -1 : bar_index - trig_high_bar
+
+// ============ SOĞURMA KALİTESİ SKORU (AQS) — YARATICI EK ============
+// Binary değil sürekli: 4 koşulun ne kadar iyi karşılandığını ölç
+f_score(actual, target_max) =>
+    actual >= target_max ? 0.0 : math.max(0.0, 1.0 - actual / math.max(target_max, eps))
+
+aqs_low = if bars_since_low_trig == m_bars and not na(ref_v_low)
+    vs = f_score(v_mean_m, v_ratio * ref_v_low)
+    ns = f_score(n_mean_m, n_ratio * ref_n_low)
+    rs = f_score(r_mean_m, range_ratio * ref_r_low)
+    ls = min_low_m >= trig_low_px * (1.0 - delta_tol) ? 1.0 : 0.0
+    math.pow(math.max(vs, eps) * math.max(ns, eps) * math.max(rs, eps) * math.max(ls, eps), 0.25)
+else
+    na
+
+aqs_high = if bars_since_high_trig == m_bars and not na(ref_v_high)
+    vs = f_score(v_mean_m, v_ratio * ref_v_high)
+    ns = f_score(n_mean_m, n_ratio * ref_n_high)
+    rs = f_score(r_mean_m, range_ratio * ref_r_high)
+    hs = max_high_m <= trig_high_px * (1.0 + delta_tol) ? 1.0 : 0.0
+    math.pow(math.max(vs, eps) * math.max(ns, eps) * math.max(rs, eps) * math.max(hs, eps), 0.25)
+else
+    na
+
+// ============ SİNYAL ÜRETİMİ ============
+// AQS > 0 ise hard signal, ek olarak quality tiers
+buy_signal_strong  = not na(aqs_low)  and aqs_low  >= 0.7
+buy_signal_medium  = not na(aqs_low)  and aqs_low  >= 0.4 and aqs_low  < 0.7
+sell_signal_strong = not na(aqs_high) and aqs_high >= 0.7
+sell_signal_medium = not na(aqs_high) and aqs_high >= 0.4 and aqs_high < 0.7
+
+// ============ GÖRSELLEŞTİRME ============
+col_dts  = color.new(#5cd6a8, 0)
+col_tts  = color.new(#e85a71, 0)
+col_trig = color.new(#f5a623, 30)
+col_zero = color.new(#45475a, 50)
+
+hline(0,           "Sıfır",         color=col_zero)
+hline(dts_trigger, "Tetik Eşiği",   color=col_trig, linestyle=hline.style_dashed)
+hline(1,           "Üst",           color=col_zero)
+
+plot(dts, "DTS", color=col_dts, linewidth=2)
+plot(tts, "TTS", color=col_tts, linewidth=2)
+plot(show_aqs ? aqs_low  : na, "AQS Dip",  color=color.new(#5cd6a8, 0), style=plot.style_circles, linewidth=3)
+plot(show_aqs ? aqs_high : na, "AQS Tepe", color=color.new(#e85a71, 0), style=plot.style_circles, linewidth=3)
+
+plotshape(buy_signal_strong,  "AL (Güçlü)",  shape.triangleup,   location.bottom, color=#5cd6a8, size=size.normal,  text="AL")
+plotshape(buy_signal_medium,  "AL (Orta)",   shape.triangleup,   location.bottom, color=color.new(#5cd6a8, 50), size=size.small)
+plotshape(sell_signal_strong, "SAT (Güçlü)", shape.triangledown, location.top,    color=#e85a71, size=size.normal,  text="SAT")
+plotshape(sell_signal_medium, "SAT (Orta)",  shape.triangledown, location.top,    color=color.new(#e85a71, 50), size=size.small)
+
+// ============ ATOMİK METRİK TABLOSU ============
+if show_g_e_a and barstate.islast
+    var table tbl = table.new(position.top_right, 2, 5, bgcolor=color.new(#0a0e1a, 20), border_width=1, border_color=#45475a)
+    table.cell(tbl, 0, 0, "Metrik", bgcolor=#1e1e2e, text_color=#f5a623)
+    table.cell(tbl, 1, 0, "Değer",  bgcolor=#1e1e2e, text_color=#f5a623)
+    table.cell(tbl, 0, 1, "G (V/N)",     text_color=#cdd6f4)
+    table.cell(tbl, 1, 1, str.tostring(g_val, "#.##"),  text_color=#cdd6f4)
+    table.cell(tbl, 0, 2, "E (yön)",     text_color=#cdd6f4)
+    table.cell(tbl, 1, 2, str.tostring(e_val, "#.##"),  text_color=#cdd6f4)
+    table.cell(tbl, 0, 3, "A (baskı)",   text_color=#cdd6f4)
+    table.cell(tbl, 1, 3, str.tostring(a_val, "#.##"),  text_color=#cdd6f4)
+    table.cell(tbl, 0, 4, "N-proxy",     text_color=#cdd6f4)
+    table.cell(tbl, 1, 4, str.tostring(n_proxy, "#.#"), text_color=#cdd6f4)
+
+// ============ ALARMLAR ============
+alertcondition(buy_signal_strong,  "KET AL Güçlü",  "KET: dip tükenme + yüksek AQS — AL sinyali (güçlü)")
+alertcondition(buy_signal_medium,  "KET AL Orta",   "KET: dip tükenme + orta AQS — AL sinyali (orta)")
+alertcondition(sell_signal_strong, "KET SAT Güçlü", "KET: tepe tükenme + yüksek AQS — SAT sinyali (güçlü)")
+alertcondition(sell_signal_medium, "KET SAT Orta",  "KET: tepe tükenme + orta AQS — SAT sinyali (orta)")
